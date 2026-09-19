@@ -9,6 +9,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: staging-production-release
+  cancel-in-progress: false
+
 jobs:
   deploy-staging:
     name: Deploy to Staging
@@ -149,3 +153,17 @@ jobs:
           kubectl get pods -n staging
           kubectl get services -n staging
           kubectl get pvc -n staging
+
+  test-staging:
+    name: Test staging before production
+    needs: deploy-staging
+    uses: ./.github/workflows/03-staging-test.yml
+    secrets: inherit
+
+  deploy-production:
+    name: Automatically deploy to production
+    needs: test-staging
+    uses: ./.github/workflows/04-deploy-production.yml
+    with:
+      image_tag: ${{ github.event.workflow_run.head_sha }}
+    secrets: inherit
