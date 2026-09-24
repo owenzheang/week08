@@ -59,8 +59,11 @@ jobs:
         run: terraform validate
 
       - name: Plan infrastructure
-        run: terraform plan -input=false -lock-timeout=120s
+        run: terraform plan -input=false -lock-timeout=120s -out=task102.tfplan
 
-      - name: Remove temporary variables
+      - name: Apply infrastructure
+        run: terraform apply -input=false -lock-timeout=120s task102.tfplan
+
+      - name: Remove temporary files
         if: always()
-        run: rm -f terraform.tfvars
+        run: rm -f terraform.tfvars task102.tfplan
