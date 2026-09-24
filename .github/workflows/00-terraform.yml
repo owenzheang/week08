@@ -1,0 +1,66 @@
+name: 00 - Terraform
+
+on:
+  push:
+    branches:
+      - task102-devsecops
+    paths:
+      - "terraform/**"
+      - ".github/workflows/00-terraform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-week08
+  cancel-in-progress: false
+
+jobs:
+  terraform-plan:
+    name: Validate and plan infrastructure
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      ARM_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
+      ARM_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
+      ARM_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
+      ARM_SUBSCRIPTION_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Write Terraform variables
+        env:
+          TFVARS_CONTENT: ${{ secrets.TERRAFORM_TFVARS }}
+        run: |
+          if [ -z "$TFVARS_CONTENT" ]; then
+            echo "TERRAFORM_TFVARS secret is missing."
+            exit 1
+          fi
+          printf '%s\n' "$TFVARS_CONTENT" > terraform.tfvars
+
+      - name: Initialise Terraform
+        run: terraform init -input=false -lockfile=readonly
+
+      - name: Validate Terraform
+        run: terraform validate
+
+      - name: Plan infrastructure
+        run: terraform plan -input=false -lock-timeout=120s
+
+      - name: Remove temporary variables
+        if: always()
+        run: rm -f terraform.tfvars
