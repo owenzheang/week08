@@ -1,13 +1,8 @@
 name: 00 - Terraform
 
 on:
-  push:
-    branches:
-      - task102-devsecops
-    paths:
-      - "terraform/**"
-      - ".github/workflows/00-terraform.yml"
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -18,7 +13,7 @@ concurrency:
 
 jobs:
   terraform-plan:
-    name: Validate and plan infrastructure
+    name: Validate, plan and apply infrastructure
     runs-on: ubuntu-latest
 
     defaults:

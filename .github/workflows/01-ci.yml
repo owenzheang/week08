@@ -12,6 +12,10 @@ on:
 
 
 jobs:
+  infrastructure:
+    name: Prepare Azure infrastructure
+    uses: ./.github/workflows/00-terraform.yml
+    secrets: inherit
 
   # =========================================================
   # Backend Tests
@@ -111,7 +115,9 @@ jobs:
     runs-on: ubuntu-latest
 
     # All backend tests must pass before this job starts
+    # Infrastructure and all backend tests must succeed first
     needs:
+      - infrastructure
       - backend-test
 
     # Build and push when code is pushed to main or manually triggered

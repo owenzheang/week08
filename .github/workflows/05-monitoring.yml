@@ -9,6 +9,11 @@ on:
       - ".github/workflows/05-monitoring.yml"
   workflow_dispatch:
   workflow_call:
+    inputs:
+      checkout_ref:
+        description: "Tested commit to deploy"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -26,6 +31,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.checkout_ref || github.sha }}
 
       - name: Login to Azure
         uses: azure/login@v3
