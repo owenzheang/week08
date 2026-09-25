@@ -12,6 +12,7 @@ from app.db import Base, engine
 from app.models import User, UserRole
 from app.routers import auth, users
 from app.security import hash_password
+from prometheus_fastapi_instrumentator import Instrumentator
 
 
 logging.basicConfig(
@@ -139,3 +140,11 @@ def health_check() -> dict[str, str]:
         "status": "healthy",
         "service": "user-service",
     }
+
+Instrumentator(
+    excluded_handlers=[r"^/metrics$"],
+).instrument(app).expose(
+    app,
+    endpoint="/metrics",
+    include_in_schema=False,
+)

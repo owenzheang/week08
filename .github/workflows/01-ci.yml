@@ -5,12 +5,17 @@ on:
   push:
     branches:
       - main
+      - task102-devsecops
   
   # Manual trigger for the workflow
   workflow_dispatch:
 
 
 jobs:
+  infrastructure:
+    name: Prepare Azure infrastructure
+    uses: ./.github/workflows/00-terraform.yml
+    secrets: inherit
 
   # =========================================================
   # Backend Tests
@@ -110,7 +115,9 @@ jobs:
     runs-on: ubuntu-latest
 
     # All backend tests must pass before this job starts
+    # Infrastructure and all backend tests must succeed first
     needs:
+      - infrastructure
       - backend-test
 
     # Build and push when code is pushed to main or manually triggered
@@ -159,6 +166,17 @@ jobs:
             --platform linux/amd64 \
             -t ${{ vars.ACR_LOGIN_SERVER }}/${{ matrix.image }}:${{ github.sha }} \
             ./${{ matrix.service }}
+
+      - name: Scan image with Docker Scout
+        uses: docker/scout-action@v1
+        with:
+          dockerhub-user: ${{ secrets.DOCKERHUB_USERNAME }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
+          command: cves
+          image: local://${{ vars.ACR_LOGIN_SERVER }}/${{ matrix.image }}:${{ github.sha }}
+          summary: true
+          write-comment: false
+          exit-code: false
 
       - name: Push Docker image with commit SHA
         run: |

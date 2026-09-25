@@ -197,3 +197,18 @@ cython_debug/
 .cursorindexingignore
 
 node_modules/
+# Terraform local files and sensitive configuration
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+
+# Local configuration archives
+/.github.zip
+/kubernetes.zip
+/terraform-config.zip
+/task102-config.zip
